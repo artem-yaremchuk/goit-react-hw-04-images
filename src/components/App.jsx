@@ -1,16 +1,87 @@
-export const App = () => {
+import { useState, useEffect, useCallback } from "react";
+import Searchbar from "./Searchbar/Searchbar";
+import ImageGallery from "./ImageGallery/ImageGallery";
+import Loader from "./Loader/Loader";
+import Button from "./Button/Button";
+import { getProductsWithSearch } from "../api/products.js";
+import Notiflix from "notiflix";
+
+const App = () => {
+  const [query, setQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [loadMore, setLoadMore] = useState(false);
+
+  const handleProducts = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const { hits, totalHits, perPage } = await getProductsWithSearch(
+        query,
+        page,
+      );
+
+      if (hits.length === 0) {
+        Notiflix.Notify.failure(
+          "Sorry, there are no images matching your search query. Please try again.",
+        );
+      } else if (page === 1) {
+        Notiflix.Notify.success(`Hooray! We found ${totalHits} images!`);
+      } else if (totalHits < page * perPage && totalHits !== 0) {
+        delayNotify();
+      }
+
+      setImages((prevImages) => [...prevImages, ...hits]);
+      setLoadMore(page < Math.ceil(totalHits / perPage));
+    } catch (error) {
+      Notiflix.Notify.failure(error.message);
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [query, page]);
+
+  useEffect(() => {
+    if (query) {
+      handleProducts();
+    }
+  }, [handleProducts, page, query]);
+
+  const delayNotify = () => {
+    setTimeout(() => {
+      Notiflix.Notify.info(
+        "We're sorry, but you've reached the end of search results.",
+      );
+    }, 1000);
+  };
+
+  const loadMoreImages = () => {
+    setPage((prevPage) => prevPage + 1);
+  };
+
+  const handleSubmit = (query) => {
+    setQuery(query);
+    setImages([]);
+    setPage(1);
+    setLoadMore(false);
+  };
+
   return (
     <div
       style={{
-        height: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontSize: 40,
-        color: '#010101'
+        display: "grid",
+        gridTemplateColumns: "1fr",
+        gridGap: 16,
+        paddingBottom: 24,
       }}
     >
-      React homework template
+      <Searchbar submit={handleSubmit} />
+      {images.length > 0 && <ImageGallery images={images} />}
+      {loadMore && <Button handleLoad={loadMoreImages} />}
+      {isLoading && <Loader />}
     </div>
   );
 };
+
+export default App;
