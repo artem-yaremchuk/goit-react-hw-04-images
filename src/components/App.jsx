@@ -9,7 +9,7 @@ import Notiflix from "notiflix";
 const App = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  // const [error, setError] = useState("");
   const [images, setImages] = useState([]);
   const [page, setPage] = useState(1);
   const [loadMore, setLoadMore] = useState(false);
@@ -36,7 +36,7 @@ const App = () => {
       setLoadMore(page < Math.ceil(totalHits / perPage));
     } catch (error) {
       Notiflix.Notify.failure(error.message);
-      setError(error.message);
+      // setError(error.message);
     } finally {
       setIsLoading(false);
     }
