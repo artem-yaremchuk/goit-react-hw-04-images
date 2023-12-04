@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Searchbar from "./Searchbar/Searchbar";
 import ImageGallery from "./ImageGallery/ImageGallery";
 import Loader from "./Loader/Loader";
@@ -9,44 +9,41 @@ import Notiflix from "notiflix";
 const App = () => {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  // const [error, setError] = useState("");
   const [images, setImages] = useState([]);
   const [page, setPage] = useState(1);
   const [loadMore, setLoadMore] = useState(false);
 
-  const handleProducts = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const { hits, totalHits, perPage } = await getProductsWithSearch(
-        query,
-        page,
-      );
-
-      if (hits.length === 0) {
-        Notiflix.Notify.failure(
-          "Sorry, there are no images matching your search query. Please try again.",
-        );
-      } else if (page === 1) {
-        Notiflix.Notify.success(`Hooray! We found ${totalHits} images!`);
-      } else if (totalHits < page * perPage && totalHits !== 0) {
-        delayNotify();
-      }
-
-      setImages((prevImages) => [...prevImages, ...hits]);
-      setLoadMore(page < Math.ceil(totalHits / perPage));
-    } catch (error) {
-      Notiflix.Notify.failure(error.message);
-      // setError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [query, page]);
-
   useEffect(() => {
     if (query) {
+      const handleProducts = async () => {
+        try {
+          setIsLoading(true);
+          const { hits, totalHits, perPage } = await getProductsWithSearch(
+            query,
+            page,
+          );
+
+          if (hits.length === 0) {
+            Notiflix.Notify.failure(
+              "Sorry, there are no images matching your search query. Please try again.",
+            );
+          } else if (page === 1) {
+            Notiflix.Notify.success(`Hooray! We found ${totalHits} images!`);
+          } else if (totalHits < page * perPage && totalHits !== 0) {
+            delayNotify();
+          }
+
+          setImages((prevImages) => [...prevImages, ...hits]);
+          setLoadMore(page < Math.ceil(totalHits / perPage));
+        } catch (error) {
+          Notiflix.Notify.failure(error.message);
+        } finally {
+          setIsLoading(false);
+        }
+      };
       handleProducts();
     }
-  }, [handleProducts, page, query]);
+  }, [query, page]);
 
   const delayNotify = () => {
     setTimeout(() => {
